@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <ncurses.h>
 #include <time.h>
+#include <unistd.h>
+
 
 void fenToBoard(char *fen, char board[8][8]) {
     int file = 0, rank = 0;
@@ -23,6 +25,9 @@ void fenToBoard(char *fen, char board[8][8]) {
     }
 }
 
+bool isBlack(char p) {
+    return p == 'r' || p == 'n' || p == 'b' || p == 'q' || p == 'k' || p == 'p';
+}
 
 void drawBoard(WINDOW *win) {
     /* draws board without pieces:
@@ -43,39 +48,13 @@ void drawBoard(WINDOW *win) {
             ├───┼───┼───┼───┼───┼───┼───┼───┤  
             │   │   │   │   │   │   │   │   │ 1
             └───┴───┴───┴───┴───┴───┴───┴───┘  
-              a   b   c   d   e   f   g   h    
-    */
-    /*
-     
-            #####     #####     #####     #####     
-            #####     #####     #####     #####     
-            #####     #####     #####     #####     
-       #####     #####     #####     #####     
-       #####     #####     #####     #####     
-       #####     #####     #####     #####     
-            #####     #####     #####     #####     
-            #####     #####     #####     #####     
-            #####     #####     #####     #####     
-       #####     #####     #####     #####     
-       #####     #####     #####     #####     
-       #####     #####     #####     #####     
-            #####     #####     #####     #####     
-            #####     #####     #####     #####     
-            #####     #####     #####     #####     
-       #####     #####     #####     #####     
-       #####     #####     #####     #####     
-       #####     #####     #####     #####     
-            #####     #####     #####     #####     
-            #####     #####     #####     #####     
-            #####     #####     #####     #####     
-       #####     #####     #####     #####     
-       #####     #####     #####     #####     
-       #####     #####     #####     #####     
+              a   b   c   d   e   f   g   h
+    * TODO flip board so player's pieces are always at the bottom    
     */
 
     for (int rank = 0; rank < 8; rank++) {
         for (int file = 0; file < 8; file++) {
-            int x = file*4, y = (7-rank)*2;    // TODO flip board so player's pieces are always at the bottom
+            int x = file*4, y = rank*2;    
             chtype ul = ACS_PLUS;
             chtype ur = ACS_PLUS;
             chtype ll = ACS_PLUS;
@@ -83,10 +62,10 @@ void drawBoard(WINDOW *win) {
             if (y == 0) {
                 ul = ACS_TTEE;
                 ur = ACS_TTEE;
-                mvwaddch(win, y+3, x+2, 'a' + file);
             } else if (y == 7*2) {
                 ll = ACS_BTEE;
                 lr = ACS_BTEE;
+                mvwaddch(win, y+3, x+2, 'a' + file);
             }
             if (x == 0) {
                 ul = ACS_LTEE;
@@ -129,30 +108,14 @@ void drawBoard(WINDOW *win) {
             mvwaddch(win, y+2, x+3, ACS_HLINE);
             mvwaddch(win, y+1, x, ACS_VLINE);
             mvwaddch(win, y+1, x+4, ACS_VLINE);
-
-            mvwprintw(win, y+1, x+1, "%c%c", 'a'+file, '1'+rank);
         }
     }
 }
 
-void displayBoard(char board[8][8]) {
-    start_color();
-    init_pair(1, COLOR_WHITE, COLOR_BLUE);
-    init_pair(2, COLOR_WHITE, COLOR_BLUE);
-    init_pair(3, COLOR_WHITE, COLOR_BLACK);
-    init_pair(4, COLOR_WHITE, COLOR_BLACK);
-    WINDOW *win = stdscr;
-
-    attron(COLOR_PAIR(3));
-    // ┐┌┘└├┤┴┬│─┼
-    /*
-    mvwprintw(win, 0, 0, 
-            );
-
-    */
+void displayBoard(WINDOW *win, char board[8][8]) {
+    wattron(win, COLOR_PAIR(2));
     drawBoard(win);
-    return;
-    attron(A_BOLD);
+    wattron(win, A_BOLD);
     for (int rank = 0; rank < 8; rank++) {
         for (int file = 0; file < 8; file++) {
             char c = board[rank][file];
@@ -160,35 +123,54 @@ void displayBoard(char board[8][8]) {
                 c = ' ';
             }
             if ((rank+file)%2 == 0) {
-                if (c > 'a' && c < 'z') {
-                    attron(A_DIM | COLOR_PAIR(4));
+                if (isBlack(c)) {
+                    wattron(win, A_DIM | COLOR_PAIR(2));
                 } else {
-                    attron(COLOR_PAIR(3));
+                    wattron(win, COLOR_PAIR(2));
                 }
             } else {
-                if (c > 'a' && c < 'z') {
-                    attron(A_DIM | COLOR_PAIR(2));
+                if (isBlack(c)) {
+                    wattron(win, A_DIM | COLOR_PAIR(1));
                 } else {
-                    attron(COLOR_PAIR(1));
+                    wattron(win, COLOR_PAIR(1));
                 }
             }
             mvwprintw(win, 1+rank*2, file*4+1, " %c ", c);
-            attroff(A_DIM);
+            wattroff(win, A_DIM);
 
         }
     }
-    refresh();
 }
 int main(int argc, char *argv[]) {
-    char board[8][8];
-
-
-    fenToBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", board);
     initscr();
-    displayBoard(board);
+    cbreak();
+    start_color();
+    init_pair(1, COLOR_WHITE, COLOR_BLUE);
+    init_pair(2, COLOR_WHITE, COLOR_BLACK);
+
+    WINDOW *win = newwin(20, 36, 1, 1);
+    refresh();
+
+    char board[8][8];
+    fenToBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", board);
+
+    box(win, 0, 0);
+    displayBoard(win, board);
+    wrefresh(win);
+
+    WINDOW *win2 = newwin(10, 40, 5, 80);
+    scrollok(win2, true);
+    box(win2, 0, 0);
+    wattron(win, COLOR_PAIR(1));
+    wmove(win2, 1,1);
+    for (int i = 0; i < 101; i++) {
+        wprintw(win2, "AAAA %d\n", random()%100);
+        wrefresh(win2);
+        getch();
+    }
+
     getch();
     endwin();
-
 
     return 0;
 }
