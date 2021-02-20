@@ -23,34 +23,116 @@ void fenToBoard(char *fen, char board[8][8]) {
     }
 }
 
+
 void drawBoard(WINDOW *win) {
+    /* draws board without pieces:
+            ┌───┬───┬───┬───┬───┬───┬───┬───┐  
+            │   │   │   │   │   │   │   │   │ 8
+            ├───┼───┼───┼───┼───┼───┼───┼───┤  
+            │   │   │   │   │   │   │   │   │ 7
+            ├───┼───┼───┼───┼───┼───┼───┼───┤  
+            │   │   │   │   │   │   │   │   │ 6
+            ├───┼───┼───┼───┼───┼───┼───┼───┤  
+            │   │   │   │   │   │   │   │   │ 5
+            ├───┼───┼───┼───┼───┼───┼───┼───┤  
+            │   │   │   │   │   │   │   │   │ 4
+            ├───┼───┼───┼───┼───┼───┼───┼───┤  
+            │   │   │   │   │   │   │   │   │ 3
+            ├───┼───┼───┼───┼───┼───┼───┼───┤  
+            │   │   │   │   │   │   │   │   │ 2
+            ├───┼───┼───┼───┼───┼───┼───┼───┤  
+            │   │   │   │   │   │   │   │   │ 1
+            └───┴───┴───┴───┴───┴───┴───┴───┘  
+              a   b   c   d   e   f   g   h    
+    */
+    /*
+     
+            #####     #####     #####     #####     
+            #####     #####     #####     #####     
+            #####     #####     #####     #####     
+       #####     #####     #####     #####     
+       #####     #####     #####     #####     
+       #####     #####     #####     #####     
+            #####     #####     #####     #####     
+            #####     #####     #####     #####     
+            #####     #####     #####     #####     
+       #####     #####     #####     #####     
+       #####     #####     #####     #####     
+       #####     #####     #####     #####     
+            #####     #####     #####     #####     
+            #####     #####     #####     #####     
+            #####     #####     #####     #####     
+       #####     #####     #####     #####     
+       #####     #####     #####     #####     
+       #####     #####     #####     #####     
+            #####     #####     #####     #####     
+            #####     #####     #####     #####     
+            #####     #####     #####     #####     
+       #####     #####     #####     #####     
+       #####     #####     #####     #####     
+       #####     #####     #####     #####     
+    */
+
     for (int rank = 0; rank < 8; rank++) {
         for (int file = 0; file < 8; file++) {
+            int x = file*4, y = (7-rank)*2;    // TODO flip board so player's pieces are always at the bottom
             chtype ul = ACS_PLUS;
             chtype ur = ACS_PLUS;
             chtype ll = ACS_PLUS;
             chtype lr = ACS_PLUS;
-            if (rank == 0) {
-                if (file == 0) {
-                    ul = ACS_ULCORNER;
-                }
-                if (file == 7) {
-                    ur = ACS_UR_CORNER;
-                }
+            if (y == 0) {
+                ul = ACS_TTEE;
+                ur = ACS_TTEE;
+                mvwaddch(win, y+3, x+2, 'a' + file);
+            } else if (y == 7*2) {
+                ll = ACS_BTEE;
+                lr = ACS_BTEE;
             }
-            if (rank == 7) {
-                if (file == 0) {
-                    ul = ACS_LLCORNER;
-                }
-                if (file == 7) {
-                    ur = ACS_LR_CORNER;
-                }
+            if (x == 0) {
+                ul = ACS_LTEE;
+                ll = ACS_LTEE;
+            } else if (x == 4*7) {
+                ur = ACS_RTEE;
+                lr = ACS_RTEE;
+                mvwaddch(win, y+1, x+6, '1' + rank);
             }
-            mvwaddch(win, 
 
+            if (y == 0 && x == 0) {
+                ul = ACS_ULCORNER;
+            }
+            if (y == 0 && x == 4*7) {
+                ur = ACS_URCORNER;
+            }
+            if (y == 7*2 && x == 0) {
+                ll = ACS_LLCORNER;
+            }
+            if (y == 7*2 && x == 4*7) {
+                lr = ACS_LRCORNER;
+            }
 
+            /*	 01234
+             * 0 +---+
+             * 1 |   |
+             * 2 +---+
+             */
 
+            mvwaddch(win, y, x, ul);
+            mvwaddch(win, y+2, x, ll);
+            mvwaddch(win, y, x+4, ur);
+            mvwaddch(win, y+2, x+4, lr);
 
+            mvwaddch(win, y, x+1, ACS_HLINE);
+            mvwaddch(win, y, x+2, ACS_HLINE);
+            mvwaddch(win, y, x+3, ACS_HLINE);
+            mvwaddch(win, y+2, x+1, ACS_HLINE);
+            mvwaddch(win, y+2, x+2, ACS_HLINE);
+            mvwaddch(win, y+2, x+3, ACS_HLINE);
+            mvwaddch(win, y+1, x, ACS_VLINE);
+            mvwaddch(win, y+1, x+4, ACS_VLINE);
+
+            mvwprintw(win, y+1, x+1, "%c%c", 'a'+file, '1'+rank);
+        }
+    }
 }
 
 void displayBoard(char board[8][8]) {
@@ -65,39 +147,11 @@ void displayBoard(char board[8][8]) {
     // ┐┌┘└├┤┴┬│─┼
     /*
     mvwprintw(win, 0, 0, 
-            "┌───┬───┬───┬───┬───┬───┬───┬───┐  \n"
-            "│   │   │   │   │   │   │   │   │ 8\n"
-            "├───┼───┼───┼───┼───┼───┼───┼───┤  \n"
-            "│   │   │   │   │   │   │   │   │ 7\n"
-            "├───┼───┼───┼───┼───┼───┼───┼───┤  \n"
-            "│   │   │   │   │   │   │   │   │ 6\n"
-            "├───┼───┼───┼───┼───┼───┼───┼───┤  \n"
-            "│   │   │   │   │   │   │   │   │ 5\n"
-            "├───┼───┼───┼───┼───┼───┼───┼───┤  \n"
-            "│   │   │   │   │   │   │   │   │ 4\n"
-            "├───┼───┼───┼───┼───┼───┼───┼───┤  \n"
-            "│   │   │   │   │   │   │   │   │ 3\n"
-            "├───┼───┼───┼───┼───┼───┼───┼───┤  \n"
-            "│   │   │   │   │   │   │   │   │ 2\n"
-            "├───┼───┼───┼───┼───┼───┼───┼───┤  \n"
-            "│   │   │   │   │   │   │   │   │ 1\n"
-            "└───┴───┴───┴───┴───┴───┴───┴───┘  \n"
-            "  a   b   c   d   e   f   g   h    \n"
             );
 
     */
-    draw_board(win);
-    waddch(win, ACS_URCORNER);
-    waddch(win, ACS_ULCORNER);
-    waddch(win, ACS_LRCORNER);
-    waddch(win, ACS_LLCORNER);
-    waddch(win, ACS_LTEE);
-    waddch(win, ACS_RTEE);
-    waddch(win, ACS_BTEE);
-    waddch(win, ACS_TTEE);
-    waddch(win, ACS_VLINE);
-    waddch(win, ACS_HLINE);
-    waddch(win, ACS_PLUS);
+    drawBoard(win);
+    return;
     attron(A_BOLD);
     for (int rank = 0; rank < 8; rank++) {
         for (int file = 0; file < 8; file++) {
