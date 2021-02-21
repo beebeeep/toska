@@ -3,12 +3,13 @@
 #include <limits.h>
 
 #include "fen.h"
+#include "misc.h"
 
-void fenToBoard(char *fen, board *b) {
+void parseFEN(board *b) {
     int fieldNum = 0;
     char *field;
     char *last;
-    for ((field = strtok_r(fen, " ", &last)); field; (field = strtok_r(NULL, " ", &last))) {
+    for ((field = strtok_r(b->fen, " ", &last)); field; (field = strtok_r(NULL, " ", &last))) {
         switch(++fieldNum) {
             case 1:
                 getPlacement(field, b);
@@ -32,14 +33,41 @@ void fenToBoard(char *fen, board *b) {
     }
 }
 
-void boardToFen(board b, char *fen) {
+void updateFEN(board *b) {
     int pos = 0;
-    bzero(fen, strlen(fen));
+    bzero(b->fen, 100);
     for (int rank = 0; rank < 8; rank++) {
         for (int file = 0; file < 8; file++) {
-            pos++;
+            char c = b->board[rank][file];
+            if (isPiece(c)) {
+                b->fen[pos++] = c;
+                continue;
+            }
+            if (c == ' ') {
+                if (c >= '1' && c < '9') {
+                    b->fen[pos]++;
+                } else {
+                    b->fen[pos] = '1';
+                }
+            }
         }
+        b->fen[pos++] = '/';
     }
+    b->fen[pos++] = ' ';
+    if (b->blackMove) {
+        b->fen[pos++] = 'b';
+    } else {
+        b->fen[pos++] = 'w';
+    }
+    b->fen[pos++] = ' ';
+    if (b->enPassant == 0) {
+        b->fen[pos++] = '-';
+    } else {
+        b->fen[pos++] = 'a' + b->enPassant/8;
+        b->fen[pos++] = '1'  + b->enPassant%8;
+    }
+    b->fen[pos++] = ' ';
+    sprintf(&b->fen[pos], "%d %d", b->halfMoveClock, b->move);
 }
 
 void getPlacement(char *t, board *b) {
@@ -90,8 +118,6 @@ void getCasting(char *t, board *b) {
 }
 
 void getEnPassant(char *t, board *b) {
-    b->enPassant = malloc(strlen(t));
-    strcpy(b->enPassant, t);
 }
 
 void getHalfMoveClock(char *t, board *b) {

@@ -5,8 +5,19 @@
 #include "misc.h"
 
 bool isBlack(char p) {
-    return p == 'r' || p == 'n' || p == 'b' || p == 'q' || p == 'k' || p == 'p';
+    return isPiece(p) && p > 'a';
 }
+
+bool isPiece(char p) {
+    const char *pieces = "RNBQKPrnbqkp";
+    for (int i = 0; i < 12; i++) {
+        if (p == pieces[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
 
 void drawBoard(WINDOW *win) {
     /* draws board without pieces:
@@ -116,8 +127,9 @@ void displayBoard(WINDOW *win, board b) {
             }
             mvwprintw(win, 1+rank*2, file*4+1, " %c ", c);
             wattroff(win, A_DIM);
-
         }
     }
+    wattron(win, COLOR_PAIR(1));
+    mvwprintw(win, 8*2+3, 0, "%s", b.fen);
 }
 

@@ -19,9 +19,8 @@ int main(int argc, char *argv[]) {
     refresh();
 
     board b;
-    char *pos = malloc(100);
-    strncpy(pos, START_POS, 100);
-    fenToBoard(pos, &b);
+    strncpy(b.fen, START_POS, 100);
+    parseFEN(&b);
 
     box(win, 0, 0);
     displayBoard(win, b);
