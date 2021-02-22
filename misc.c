@@ -126,16 +126,14 @@ void displayBoard(WINDOW *win, board b) {
                     wattron(win, COLOR_PAIR(1));
                 }
             }
-            if (c == 'p') {
-                mvwprintw(win, 1+rank*2, file*4+1, PAWN);
-            } else {
-                mvwprintw(win, 1+rank*2, file*4+1, " %c ", c);
-            }
 
+            mvwprintw(win, 1+rank*2, file*4+1, " %c ", c);
             wattroff(win, A_DIM);
         }
     }
     wattron(win, COLOR_PAIR(1));
     mvwprintw(win, 8*2+3, 0, "%s", b.fen);
+
+    wrefresh(win);
 }
 
