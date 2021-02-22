@@ -121,9 +121,9 @@ void getEnPassant(char *t, board *b) {
 }
 
 void getHalfMoveClock(char *t, board *b) {
-    b->halfMoveClock = strtonum(t, 0, 51, NULL);
+    b->halfMoveClock = atoi(t);
 }
 
 void getMoveNumber(char *t, board *b) {
-    b->move = strtonum(t, 0, INT_MAX, NULL);
+    b->move = atoi(t);
 }

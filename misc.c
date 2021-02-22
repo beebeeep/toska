@@ -3,6 +3,7 @@
 
 #include "fen.h"
 #include "misc.h"
+#include "pieces.h"
 
 bool isBlack(char p) {
     return isPiece(p) && p > 'a';
@@ -125,7 +126,12 @@ void displayBoard(WINDOW *win, board b) {
                     wattron(win, COLOR_PAIR(1));
                 }
             }
-            mvwprintw(win, 1+rank*2, file*4+1, " %c ", c);
+            if (c == 'p') {
+                mvwprintw(win, 1+rank*2, file*4+1, PAWN);
+            } else {
+                mvwprintw(win, 1+rank*2, file*4+1, " %c ", c);
+            }
+
             wattroff(win, A_DIM);
         }
     }

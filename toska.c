@@ -4,16 +4,22 @@
 #include <time.h>
 #include <unistd.h>
 #include <string.h>
+#include <locale.h>
 
 #include "fen.h"
 #include "misc.h"
+#include "pieces.h"
+
 
 int main(int argc, char *argv[]) {
+    setlocale(LC_ALL, "");
+
     initscr();
     cbreak();
     start_color();
     init_pair(1, COLOR_WHITE, COLOR_BLUE);
     init_pair(2, COLOR_WHITE, COLOR_BLACK);
+
 
     WINDOW *win = newwin(20, 36, 1, 1);
     refresh();
@@ -32,7 +38,7 @@ int main(int argc, char *argv[]) {
     wattron(win, COLOR_PAIR(1));
     wmove(win2, 1,1);
     for (int i = 0; i < 101; i++) {
-        wprintw(win2, "AAAA %d\n", random()%100);
+        wprintw(win2, PAWN);
         wrefresh(win2);
         getch();
     }
