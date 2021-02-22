@@ -35,7 +35,7 @@ void parseFEN(board *b) {
 
 void updateFEN(board *b) {
     int pos = 0;
-    bzero(b->fen, 100);
+    memset(b->fen, 0, 100);
     for (int rank = 0; rank < 8; rank++) {
         for (int file = 0; file < 8; file++) {
             char c = b->board[rank][file];

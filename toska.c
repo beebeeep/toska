@@ -69,14 +69,14 @@ int main(int argc, char *argv[]) {
     close(enginePipes[0][1]);
     close(enginePipes[1][0]);
     FILE *engineOutput = fdopen(enginePipes[0][0], "r");
-    FILE *engineCmd = fdopen(enginePipes[1][1], "w");
+    int engineCmd = enginePipes[1][1];
+    //FILE *engineCmd = fdopen(enginePipes[1][1], "w");
     size_t bufsize = 1024;
     char *buffer = malloc(bufsize);
     int nread;
 
     for (;;) {
-        nread = fwrite("uci\n", 4, 1, engineCmd);
-        printf("wrote %d\n", nread);
+        write(engineCmd, "uci\n", 4);
 
         for (;;) {
             nread = getline(&buffer, &bufsize, engineOutput);
@@ -87,8 +87,6 @@ int main(int argc, char *argv[]) {
                 //wprintw(logWin, buffer);
                 printf("read %d bytes: %s\n", nread, buffer);
             }
-            nread =   fwrite("uci\n", 4, 1, engineCmd);
-            printf("wrote %d\n", nread);
         }
     }
 

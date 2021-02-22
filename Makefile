@@ -2,7 +2,7 @@ TARGET=toska
 LIBS=-lncurses
 CC=clang
 LD=clang
-CFLAGS=-Wall -g -Werror -std=c99
+CFLAGS=-Wall -g -Werror -std=c99 -D_POSIX_C_SOURCE=200809L
 
 OBJECTS = $(patsubst %.c, %.o, $(wildcard *.c))
 HEADERS = $(wildcard *.h)
