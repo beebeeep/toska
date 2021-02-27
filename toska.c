@@ -10,11 +10,69 @@
 #include "misc.h"
 #include "pieces.h"
 
+typedef struct {
+    FILE *w;
+    FILE *r;
+} engineIO;
+
+WINDOW *boardWin;
+WINDOW *logWin;
+WINDOW *inputWin;
+
+void startEngine(char *cmd, int pipes[2][2]) {
+    if (pipe(pipes[0]) < 0) {   // reading from engine
+        perror("creating pipe");
+        exit(-1);
+    }
+
+    if (pipe(pipes[1]) < 0) {   // writing to engine
+        perror("creating pipe");
+        exit(-1);
+    }
+
+    if (fork() == 0) {
+        dup2(pipes[0][1], STDOUT_FILENO); // attach output pipe to stdout
+        dup2(pipes[0][1], STDERR_FILENO); // attach output pipe to stderr
+        dup2(pipes[1][0], STDIN_FILENO);  // attach input pipe to stdin 
+        close(pipes[0][0]);       // close read end of output pipe
+        close(pipes[0][1]);       // close read end of output pipe
+        close(pipes[1][0]);       // close write end of input pipe
+        close(pipes[1][1]);       // close write end of input pipe
+        execl(cmd, cmd, (char *)NULL);          // run engine
+    }
+    
+    close(pipes[0][1]);
+    close(pipes[1][0]);
+}
+
+int sendCmd(engineIO e, char *cmd, char *waitFor, char *buf, size_t bs) {
+    wprintw(logWin, " << %s\n", cmd);
+    wrefresh(logWin);
+    if (fprintf(e.w, "%s\n", cmd) < 0) {
+        return -1;
+    }
+    if (waitFor == NULL) {
+        return 0;
+    }
+    size_t nread;
+    size_t waitL = strlen(waitFor);
+    for (;;) {
+        nread = getline(&buf, &bs, e.r);
+        if (nread < 0) {
+            perror("failed to read from engine");
+            return -1;
+        }
+        wprintw(logWin, " >> %s", buf);
+        wrefresh(logWin);
+        if (nread > waitL && memcmp(buf, waitFor, waitL) == 0) {
+            return 0;
+        }
+    }
+}
 
 int main(int argc, char *argv[]) {
     char *uciCmd = argv[1];
 
-    /*
     setlocale(LC_ALL, "");
 
     initscr();
@@ -24,7 +82,7 @@ int main(int argc, char *argv[]) {
     init_pair(2, COLOR_WHITE, COLOR_BLACK);
 
 
-    WINDOW *boardWin = newwin(20, COLS/2-1, 1, 1);
+    boardWin = newwin(20, COLS/2-1, 1, 1);
     refresh();
 
     board b;
@@ -33,61 +91,32 @@ int main(int argc, char *argv[]) {
 
     displayBoard(boardWin, b);
 
-    WINDOW *logWin = newwin(LINES/2, COLS/2-2, 1, COLS/2+1);
+    logWin = newwin(LINES/2, COLS/2-2, 1, COLS/2+1);
     scrollok(logWin, true);
-    wattron(logWin, COLOR_PAIR(1));
+    wattron(logWin, COLOR_PAIR(2));
     wrefresh(logWin);
     
-    WINDOW *inputWin = newwin(2, COLS/2-1, 22, 1);
+    inputWin = newwin(2, COLS/2-1, 22, 1);
     box(inputWin, 0, 0);
     wrefresh(inputWin);
-    */
 
     int enginePipes[2][2];
-    if (pipe(enginePipes[0]) < 0) {   // reading from engine
-        perror("creating pipe");
-        return -1;
+    startEngine(uciCmd, enginePipes);
+    engineIO engine = {
+        .r = fdopen(enginePipes[0][0], "r"),
+        .w = fdopen(enginePipes[1][1], "w")
+    };
+    setvbuf(engine.w, NULL, _IOLBF, 0);    // enable line bufferring
+    if (engine.w == NULL || engine.r == NULL) {
+        perror("fdopen() failed");
+        exit(1);
     }
-
-    if (pipe(enginePipes[1]) < 0) {   // writing to engine
-        perror("creating pipe");
-        return -1;
-    }
-
-    if (fork() == 0) {
-        printf("starting %s\n", uciCmd);
-        dup2(enginePipes[0][1], STDOUT_FILENO); // attach output pipe to stdout
-        dup2(enginePipes[0][1], STDERR_FILENO); // attach output pipe to stderr
-        dup2(enginePipes[1][0], STDIN_FILENO);  // attach input pipe to stdin 
-        close(enginePipes[0][0]);       // close read end of output pipe
-        close(enginePipes[0][1]);       // close read end of output pipe
-        close(enginePipes[1][0]);       // close write end of input pipe
-        close(enginePipes[1][1]);       // close write end of input pipe
-        execl(uciCmd, uciCmd, (char *)NULL);          // run engine
-    }
-    
-    close(enginePipes[0][1]);
-    close(enginePipes[1][0]);
-    FILE *engineOutput = fdopen(enginePipes[0][0], "r");
-    int engineCmd = enginePipes[1][1];
-    //FILE *engineCmd = fdopen(enginePipes[1][1], "w");
     size_t bufsize = 1024;
     char *buffer = malloc(bufsize);
-    int nread;
+
+    sendCmd(engine, "uci", "uciok", buffer, bufsize);
 
     for (;;) {
-        write(engineCmd, "uci\n", 4);
-
-        for (;;) {
-            nread = getline(&buffer, &bufsize, engineOutput);
-            if (nread < 0) {
-                perror("reading from engine ");
-                return 0;
-            } else {
-                //wprintw(logWin, buffer);
-                printf("read %d bytes: %s\n", nread, buffer);
-            }
-        }
     }
 
 
