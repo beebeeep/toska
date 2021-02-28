@@ -2,7 +2,7 @@
 #include <string.h>
 #include <limits.h>
 
-#include "fen.h"
+#include "chess.h"
 #include "misc.h"
 
 void parseFEN(board *b) {
@@ -127,3 +127,8 @@ void getHalfMoveClock(char *t, board *b) {
 void getMoveNumber(char *t, board *b) {
     b->move = atoi(t);
 }
+
+int makeMove(char move[6], board *b) {
+    return -1;
+}
+

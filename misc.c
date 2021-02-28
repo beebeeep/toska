@@ -1,9 +1,8 @@
 #include <stdbool.h>
 #include <ncurses.h>
 
-#include "fen.h"
+#include "chess.h"
 #include "misc.h"
-#include "pieces.h"
 
 bool isBlack(char p) {
     return isPiece(p) && p > 'a';

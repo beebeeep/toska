@@ -6,9 +6,8 @@
 #include <string.h>
 #include <locale.h>
 
-#include "fen.h"
+#include "chess.h"
 #include "misc.h"
-#include "pieces.h"
 
 typedef struct {
     FILE *w;
@@ -97,7 +96,7 @@ int main(int argc, char *argv[]) {
     wrefresh(logWin);
     
     inputWin = newwin(2, COLS/2-1, 22, 1);
-    box(inputWin, 0, 0);
+    //box(inputWin, 0, 0);
     wrefresh(inputWin);
 
     int enginePipes[2][2];
@@ -113,16 +112,28 @@ int main(int argc, char *argv[]) {
     }
     size_t bufsize = 1024;
     char *buffer = malloc(bufsize);
+    char input[5];
 
     sendCmd(engine, "uci", "uciok", buffer, bufsize);
+    sendCmd(engine, "ucinewgame", NULL, buffer, bufsize);
+    sendCmd(engine, "isready", "readyok", buffer, bufsize);
+    snprintf(buffer, bufsize, "position fen %s", b.fen);
+    sendCmd(engine, buffer, NULL, buffer, bufsize);
 
     for (;;) {
+        werase(inputWin);
+        mvwprintw(inputWin, 0, 0, "Your move: ");
+        wgetnstr(inputWin, input, 6);
+        if (makeMove(input, &b) < 0) {
+            werase(inputWin);
+            mvwprintw(inputWin, 0, 0, "Invalid move!");
+            wrefresh(inputWin);
+            sleep(1);
+        }
+
     }
 
-
-        
     endwin();
-
     return 0;
 }
 

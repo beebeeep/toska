@@ -1,5 +1,5 @@
-#ifndef FEN_H
-#define FEN_H
+#ifndef CHESS_H
+#define CHESS_H
 
 #include <stdbool.h>
 
@@ -28,6 +28,7 @@ void getCasting(char *t, board *b);
 void getEnPassant(char *t, board *b);
 void getHalfMoveClock(char *t, board *b);
 void getMoveNumber(char *t, board *b);
+int makeMove(char move[6], board *b);
 
 
 
