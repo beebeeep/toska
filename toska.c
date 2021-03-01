@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
             wrefresh(inputWin);
             sleep(1);
         }
-
+        displayBoard(boardWin, b);
     }
 
     endwin();

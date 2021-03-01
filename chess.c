@@ -128,7 +128,31 @@ void getMoveNumber(char *t, board *b) {
     b->move = atoi(t);
 }
 
+bool isValidMove(char move[6], board *b) {
+    return true;
+}
+
 int makeMove(char move[6], board *b) {
-    return -1;
+    int rank1, file1, rank2, file2;
+    if (!isValidMove(move, b)) {
+        return -1;
+    }
+    if (strlen(move) == 4) {
+        file1 = move[0] - 'a';
+        rank1 = move[1] - '1';
+        file2 = move[2] - 'a';
+        rank2 = move[3] - '1';
+        b->board[rank2][file2] = b->board[rank1][file1];
+        b->board[rank1][file1] = ' ';
+        b->blackMove = !b->blackMove;
+        if (!b->blackMove) {
+            b->move++;
+        }
+        updateFEN(b);
+    } else {
+        // todo check casting
+        return -1;
+    }
+    return 0;
 }
 
