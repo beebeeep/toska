@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
         .r = fdopen(enginePipes[0][0], "r"),
         .w = fdopen(enginePipes[1][1], "w")
     };
-    setvbuf(engine.w, NULL, _IOLBF, 0);    // enable line bufferring
+    setvbuf(engine.w, NULL, _IOLBF, 0);   // enable line bufferring for engine write FD
     if (engine.w == NULL || engine.r == NULL) {
         perror("fdopen() failed");
         exit(1);
@@ -124,7 +124,8 @@ int main(int argc, char *argv[]) {
     for (;;) {
         werase(inputWin);
         mvwprintw(inputWin, 0, 0, "Your move: ");
-        debugBoard(logWin, b);
+        //debugBoard(logWin, b);
+        printd(logWin, "FEN: %s\n", b.fen);
         wgetnstr(inputWin, input, 6);
         if (makeMove(input, &b) < 0) {
             werase(inputWin);

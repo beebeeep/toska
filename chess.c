@@ -9,7 +9,9 @@ void parseFEN(board *b) {
     int fieldNum = 0;
     char *field;
     char *last;
-    for ((field = strtok_r(b->fen, " ", &last)); field; (field = strtok_r(NULL, " ", &last))) {
+    char *fen = malloc(strlen(b->fen));
+    strncpy(fen, b->fen, strlen(b->fen));
+    for ((field = strtok_r(fen, " ", &last)); field; (field = strtok_r(NULL, " ", &last))) {
         switch(++fieldNum) {
             case 1:
                 getPlacement(field, b);
@@ -31,12 +33,13 @@ void parseFEN(board *b) {
                 break;
         }
     }
+    free(fen);
 }
 
 void updateFEN(board *b) {
     int pos = 0;
     memset(b->fen, 0, 100);
-    for (int rank = 0; rank < 8; rank++) {
+    for (int rank = 7; rank >= 0; rank--) {
         for (int file = 0; file < 8; file++) {
             char c = b->board[rank][file];
             if (isPiece(c)) {
@@ -44,28 +47,50 @@ void updateFEN(board *b) {
                 continue;
             }
             if (c == ' ') {
-                if (c >= '1' && c < '9') {
+                b->fen[pos] = '0';
+                while (b->board[rank][file] == ' ' && file < 8 ) {
                     b->fen[pos]++;
-                } else {
-                    b->fen[pos] = '1';
+                    file++;
                 }
+                file--;
+                pos++;
             }
         }
-        b->fen[pos++] = '/';
+        if (rank != 0) {
+            b->fen[pos++] = '/';
+        }
     }
     b->fen[pos++] = ' ';
+    // active color
     if (b->blackMove) {
         b->fen[pos++] = 'b';
     } else {
         b->fen[pos++] = 'w';
     }
     b->fen[pos++] = ' ';
+    // casting
+    if (b->casting | CAST_WHITE_KSIDE) {
+        b->fen[pos++] = 'K';
+    }
+    if (b->casting | CAST_WHITE_QSIDE) {
+        b->fen[pos++] = 'Q';
+    }
+    if (b->casting | CAST_BLACK_KSIDE) {
+        b->fen[pos++] = 'k';
+    }
+    if (b->casting | CAST_BLACK_QSIDE) {
+        b->fen[pos++] = 'q';
+    }
+    b->fen[pos++] = ' ';
+    // en passant
     if (b->enPassant == 0) {
         b->fen[pos++] = '-';
     } else {
         b->fen[pos++] = 'a' + b->enPassant/8;
-        b->fen[pos++] = '1'  + b->enPassant%8;
+        b->fen[pos++] = '1' + b->enPassant%8;
     }
+
+    //clock and move
     b->fen[pos++] = ' ';
     sprintf(&b->fen[pos], "%d %d", b->halfMoveClock, b->move);
 }
@@ -118,6 +143,11 @@ void getCasting(char *t, board *b) {
 }
 
 void getEnPassant(char *t, board *b) {
+    if (strlen(t) == 2) {
+        b->enPassant = 8*(t[1] - '1') + (t[0]-'a');
+    } else {
+        b->enPassant = 0;
+    }
 }
 
 void getHalfMoveClock(char *t, board *b) {

@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <ncurses.h>
+#include <stdarg.h>
 
 #include "chess.h"
 #include "misc.h"
@@ -29,6 +30,14 @@ void debugBoard(WINDOW *win, board b) {
     wrefresh(win);
 }
 
+void printd(WINDOW *win, char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    vwprintw(win, fmt, args);
+    va_end(args);
+    wrefresh(win);
+}
+
 void drawBoard(WINDOW *win, bool flipped) {
     /* draws board without pieces:
     ┌───┬───┬───┬───┬───┬───┬───┬───┐               ┌───┬───┬───┬───┬───┬───┬───┬───┐
@@ -51,6 +60,8 @@ void drawBoard(WINDOW *win, bool flipped) {
       a   b   c   d   e   f   g   h                   h   g   f   e   d   c   b   a
     */
 
+    wattron(win, COLOR_PAIR(2));
+    wattroff(win, A_BOLD);
     for (int rank = 0; rank < 8; rank++) {
         for (int file = 0; file < 8; file++) {
             int x = file*4, y = rank*2;
@@ -147,8 +158,6 @@ void displayBoard(WINDOW *win, board b) {
             wattroff(win, A_DIM);
         }
     }
-    wattron(win, COLOR_PAIR(1));
-    mvwprintw(win, 8*2+3, 0, "%s", b.fen);
 
     wrefresh(win);
 }
