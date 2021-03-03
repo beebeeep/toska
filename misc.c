@@ -18,33 +18,42 @@ bool isPiece(char p) {
     return false;
 }
 
+void debugBoard(WINDOW *win, board b) {
+    for (int rank = 0; rank < 8; rank++) {
+        for (int file = 0; file < 8; file++) {
+            wprintw(win, "%c", b.board[rank][file]);
+        }
+        wprintw(win, "\n");
+    }
+    wprintw(win, "\n--\n");
+    wrefresh(win);
+}
 
-void drawBoard(WINDOW *win) {
+void drawBoard(WINDOW *win, bool flipped) {
     /* draws board without pieces:
-            ┌───┬───┬───┬───┬───┬───┬───┬───┐  
-            │   │   │   │   │   │   │   │   │ 8
-            ├───┼───┼───┼───┼───┼───┼───┼───┤  
-            │   │   │   │   │   │   │   │   │ 7
-            ├───┼───┼───┼───┼───┼───┼───┼───┤  
-            │   │   │   │   │   │   │   │   │ 6
-            ├───┼───┼───┼───┼───┼───┼───┼───┤  
-            │   │   │   │   │   │   │   │   │ 5
-            ├───┼───┼───┼───┼───┼───┼───┼───┤  
-            │   │   │   │   │   │   │   │   │ 4
-            ├───┼───┼───┼───┼───┼───┼───┼───┤  
-            │   │   │   │   │   │   │   │   │ 3
-            ├───┼───┼───┼───┼───┼───┼───┼───┤  
-            │   │   │   │   │   │   │   │   │ 2
-            ├───┼───┼───┼───┼───┼───┼───┼───┤  
-            │   │   │   │   │   │   │   │   │ 1
-            └───┴───┴───┴───┴───┴───┴───┴───┘  
-              a   b   c   d   e   f   g   h
-    * TODO flip board so player's pieces are always at the bottom    
+    ┌───┬───┬───┬───┬───┬───┬───┬───┐               ┌───┬───┬───┬───┬───┬───┬───┬───┐
+    │ 70│   │   │   │   │   │   │ 77│ 8             │ 07│   │   │   │   │   │   │ 00│ 1
+    ├───┼───┼───┼───┼───┼───┼───┼───┤               ├───┼───┼───┼───┼───┼───┼───┼───┤
+    │   │   │   │   │   │   │   │   │ 7             │   │   │   │   │   │   │   │   │ 2
+    ├───┼───┼───┼───┼───┼───┼───┼───┤               ├───┼───┼───┼───┼───┼───┼───┼───┤
+    │   │   │   │   │   │   │   │   │ 6             │   │   │   │   │   │   │   │   │ 3
+    ├───┼───┼───┼───┼───┼───┼───┼───┤               ├───┼───┼───┼───┼───┼───┼───┼───┤
+    │   │   │   │   │   │   │   │   │ 5             │   │   │   │   │   │   │   │   │ 4
+    ├───┼───┼───┼───┼───┼───┼───┼───┤    or flipped ├───┼───┼───┼───┼───┼───┼───┼───┤
+    │   │   │   │   │   │   │   │   │ 4             │   │   │   │   │   │   │   │   │ 5
+    ├───┼───┼───┼───┼───┼───┼───┼───┤               ├───┼───┼───┼───┼───┼───┼───┼───┤
+    │   │   │   │   │   │   │   │   │ 3             │   │   │   │   │   │   │   │   │ 6
+    ├───┼───┼───┼───┼───┼───┼───┼───┤               ├───┼───┼───┼───┼───┼───┼───┼───┤
+    │   │   │   │   │   │   │   │   │ 2             │   │   │   │   │   │   │   │   │ 7
+    ├───┼───┼───┼───┼───┼───┼───┼───┤               ├───┼───┼───┼───┼───┼───┼───┼───┤
+    │ 00│   │   │   │   │   │   │ 07│ 1             │ 77│   │   │   │   │   │   │ 70│ 8
+    └───┴───┴───┴───┴───┴───┴───┴───┘               └───┴───┴───┴───┴───┴───┴───┴───┘
+      a   b   c   d   e   f   g   h                   h   g   f   e   d   c   b   a
     */
 
     for (int rank = 0; rank < 8; rank++) {
         for (int file = 0; file < 8; file++) {
-            int x = file*4, y = rank*2;    
+            int x = file*4, y = rank*2;
             chtype ul = ACS_PLUS;
             chtype ur = ACS_PLUS;
             chtype ll = ACS_PLUS;
@@ -55,7 +64,7 @@ void drawBoard(WINDOW *win) {
             } else if (y == 7*2) {
                 ll = ACS_BTEE;
                 lr = ACS_BTEE;
-                mvwaddch(win, y+3, x+2, 'a' + file);
+                mvwaddch(win, y+3, x+2, flipped?('h' - file):('a' + file));
             }
             if (x == 0) {
                 ul = ACS_LTEE;
@@ -63,7 +72,7 @@ void drawBoard(WINDOW *win) {
             } else if (x == 4*7) {
                 ur = ACS_RTEE;
                 lr = ACS_RTEE;
-                mvwaddch(win, y+1, x+6, '1' + rank);
+                mvwaddch(win, y+1, x+6, flipped?('1' + rank):('8' - rank));
             }
 
             if (y == 0 && x == 0) {
@@ -104,7 +113,7 @@ void drawBoard(WINDOW *win) {
 
 void displayBoard(WINDOW *win, board b) {
     wattron(win, COLOR_PAIR(2));
-    drawBoard(win);
+    drawBoard(win, b.flipped);
     wattron(win, A_BOLD);
     for (int rank = 0; rank < 8; rank++) {
         for (int file = 0; file < 8; file++) {
@@ -126,7 +135,15 @@ void displayBoard(WINDOW *win, board b) {
                 }
             }
 
-            mvwprintw(win, 1+rank*2, file*4+1, " %c ", c);
+            int x, y;
+            if (b.flipped) {
+                x = (7-file)*4+1;
+                y = rank*2+1;
+            } else {
+                x = file*4+1;
+                y = (7-rank)*2+1;
+            }
+            mvwprintw(win, y, x, " %c ", c);
             wattroff(win, A_DIM);
         }
     }

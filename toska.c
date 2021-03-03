@@ -87,6 +87,7 @@ int main(int argc, char *argv[]) {
     board b;
     strncpy(b.fen, START_POS, 100);
     parseFEN(&b);
+    b.flipped = false;
 
     displayBoard(boardWin, b);
 
@@ -123,6 +124,7 @@ int main(int argc, char *argv[]) {
     for (;;) {
         werase(inputWin);
         mvwprintw(inputWin, 0, 0, "Your move: ");
+        debugBoard(logWin, b);
         wgetnstr(inputWin, input, 6);
         if (makeMove(input, &b) < 0) {
             werase(inputWin);

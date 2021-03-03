@@ -71,11 +71,11 @@ void updateFEN(board *b) {
 }
 
 void getPlacement(char *t, board *b) {
-    int file = 0, rank = 0;
+    int file = 0, rank = 7;
     for (int pos = 0; pos < strlen(t); pos++) {
         char c = t[pos];
         if (c == '/') {
-            rank++;
+            rank--;
             file = 0;
             continue;
         }

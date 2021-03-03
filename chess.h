@@ -11,7 +11,8 @@
 
 typedef struct {
     char fen[100];
-    char board[8][8];
+    char board[8][8];       // [0][0] is a1, [7][7] is h8
+    bool flipped;           // true if white side is on the top
     bool blackMove;
     unsigned char casting;
     unsigned int enPassant;
