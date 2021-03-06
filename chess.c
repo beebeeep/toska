@@ -162,7 +162,7 @@ bool isValidMove(char move[6], board *b) {
     return true;
 }
 
-int makeMove(char move[6], board *b) {
+int makeMove(char *move, board *b) {
     int rank1, file1, rank2, file2;
     if (!isValidMove(move, b)) {
         return -1;

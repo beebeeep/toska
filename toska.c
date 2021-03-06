@@ -12,6 +12,8 @@
 typedef struct {
     FILE *w;
     FILE *r;
+    char *buffer;
+    size_t bufsize;
 } engineIO;
 
 WINDOW *boardWin;
@@ -44,7 +46,7 @@ void startEngine(char *cmd, int pipes[2][2]) {
     close(pipes[1][0]);
 }
 
-int sendCmd(engineIO e, char *cmd, char *waitFor, char *buf, size_t bs) {
+int sendCmd(engineIO e, char *cmd, char *waitFor) {
     wprintw(logWin, " << %s\n", cmd);
     wrefresh(logWin);
     if (fprintf(e.w, "%s\n", cmd) < 0) {
@@ -56,17 +58,36 @@ int sendCmd(engineIO e, char *cmd, char *waitFor, char *buf, size_t bs) {
     size_t nread;
     size_t waitL = strlen(waitFor);
     for (;;) {
-        nread = getline(&buf, &bs, e.r);
+        nread = getline(&e.buffer, &e.bufsize, e.r);
         if (nread < 0) {
             perror("failed to read from engine");
             return -1;
         }
-        wprintw(logWin, " >> %s", buf);
+        wprintw(logWin, " >> %s", e.buffer);
         wrefresh(logWin);
-        if (nread > waitL && memcmp(buf, waitFor, waitL) == 0) {
+        if (nread > waitL && memcmp(e.buffer, waitFor, waitL) == 0) {
             return 0;
         }
     }
+}
+
+char *parseEngineMove(char *l) {
+    size_t n = strlen("bestmove ");
+    for (size_t i = n; i < n+7; i++) {
+        if (l[i] == ' ') {
+            l[i] = '\0';
+            return l+n;
+        }
+    }
+    return NULL;
+}
+
+
+void engineMove(engineIO e, board *b) {
+    snprintf(e.buffer, e.bufsize, "position fen %s", b->fen);
+    sendCmd(e, e.buffer, NULL);
+    sendCmd(e, "go movetime 500", "bestmove");
+    makeMove(parseEngineMove(e.buffer), b);
 }
 
 int main(int argc, char *argv[]) {
@@ -111,15 +132,13 @@ int main(int argc, char *argv[]) {
         perror("fdopen() failed");
         exit(1);
     }
-    size_t bufsize = 1024;
-    char *buffer = malloc(bufsize);
+    engine.buffer = malloc(1024);
+    engine.bufsize = 1024;
     char input[5];
 
-    sendCmd(engine, "uci", "uciok", buffer, bufsize);
-    sendCmd(engine, "ucinewgame", NULL, buffer, bufsize);
-    sendCmd(engine, "isready", "readyok", buffer, bufsize);
-    snprintf(buffer, bufsize, "position fen %s", b.fen);
-    sendCmd(engine, buffer, NULL, buffer, bufsize);
+    sendCmd(engine, "uci", "uciok");
+    sendCmd(engine, "ucinewgame", NULL);
+    sendCmd(engine, "isready", "readyok");
 
     for (;;) {
         werase(inputWin);
@@ -133,6 +152,8 @@ int main(int argc, char *argv[]) {
             wrefresh(inputWin);
             sleep(1);
         }
+        displayBoard(boardWin, b);
+        engineMove(engine, &b);
         displayBoard(boardWin, b);
     }
 
